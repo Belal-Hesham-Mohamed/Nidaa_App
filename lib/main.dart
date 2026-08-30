@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:nidaa/injection_container.dart';
+import 'package:nidaa/core/injection_container.dart';
 import 'package:nidaa/prayer_time/presentation/pages/prayer_times_page.dart';
 
 void main() {

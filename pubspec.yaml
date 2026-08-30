@@ -34,8 +34,10 @@ dependencies:
   equatable: ^2.1.0
   flutter:
     sdk: flutter
-  get_it: ^8.0.3
+  flutter_bloc: ^9.1.1
   geolocator: ^14.0.3
+  get_it: ^8.0.3
+  uni_country_city_picker: ^1.0.2
 
 dev_dependencies:
   flutter_lints: ^6.0.0
