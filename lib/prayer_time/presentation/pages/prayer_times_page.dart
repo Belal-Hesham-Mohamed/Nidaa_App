@@ -3,7 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:nidaa/core/injection_container.dart';
 import 'package:nidaa/location/domain/usecase/get_current_loc_usecase.dart';
 import 'package:nidaa/prayer_time/domain/entities/prayer_time.dart';
-import 'package:nidaa/prayer_time/presentation/pages/cubit/prayer_time_cubit.dart';
+import 'package:nidaa/prayer_time/presentation/cubit/prayer_time_cubit.dart';
 import 'package:uni_country_city_picker/uni_country_city_picker.dart';
 
 class PrayerTimesPage extends StatelessWidget {

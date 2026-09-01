@@ -13,7 +13,7 @@ class LocationRepositoryImpl implements LocationRepoDomain {
   Future<Either<Failure, Location>> getCurrentLocation() async {
     try{
     final location = await localDataSource.getCurrentLocation();
-    return Right(location);
+    return Right(location as Location);
       } on LocationPermissionException  {
     return Left(PermissionFailure());
   } on LocationServiceException {

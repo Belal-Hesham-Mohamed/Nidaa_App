@@ -9,7 +9,7 @@ import 'package:nidaa/prayer_time/data/repositories/prayer_times_repo.dart';
 import 'package:nidaa/prayer_time/domain/repositories/prayer_time_repo_domain.dart';
 import 'package:nidaa/prayer_time/domain/usecase/prayer_time_city.dart';
 import 'package:nidaa/prayer_time/domain/usecase/prayer_time_coordinates.dart';
-import 'package:nidaa/prayer_time/presentation/pages/cubit/prayer_time_cubit.dart';
+import 'package:nidaa/prayer_time/presentation/cubit/prayer_time_cubit.dart';
 
 final sl = GetIt.instance;
 

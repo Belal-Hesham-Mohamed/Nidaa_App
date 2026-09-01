@@ -14,7 +14,7 @@ class PrayerTimeCubit extends Cubit<PrayerTimeState> {
     required this.getPrayerTimeCoordinates,
     required this.getPrayerTimesByCity,
   }) : super(PrayerTimeInitial());
-
+//if date and location 
   Future<void> getPrayerTimeByCoordinates({
     required double latitude,
     required double longitude,
