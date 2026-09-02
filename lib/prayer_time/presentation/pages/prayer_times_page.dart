@@ -38,6 +38,8 @@ class _PrayerTimesViewState extends State<_PrayerTimesView> {
   String? _locationError;
   DateTime _now = DateTime.now();
   Timer? _clock;
+  final _nextPrayerKey = GlobalKey();
+  bool _initialPositionSet = false;
 
   @override
   void initState() {
@@ -110,14 +112,39 @@ class _PrayerTimesViewState extends State<_PrayerTimesView> {
         child: BlocBuilder<PrayerTimeCubit, PrayerTimeState>(
           builder: (context, state) {
             final success = state is PrayerTimeSuccess ? state : null;
+            if (success != null && !_initialPositionSet) {
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                final target = _nextPrayerKey.currentContext;
+                if (target != null && mounted) {
+                  _initialPositionSet = true;
+                  Scrollable.ensureVisible(
+                    target,
+                    alignment: 0,
+                    duration: const Duration(milliseconds: 350),
+                    curve: Curves.easeOut,
+                  );
+                }
+              });
+            }
             return ListView(
-              padding: const EdgeInsets.fromLTRB(20, 12, 20, 28),
+              padding: const EdgeInsets.fromLTRB(20, 8, 20, 18),
               children: [
                 _topBar(),
-                const SizedBox(height: 22),
+                const SizedBox(height: 12),
                 _locationCard(success),
                 const SizedBox(height: 24),
                 if (_locationError != null) _errorCard(_locationError!),
+                if (success != null) ...[
+                  _dateCard(success.prayerTimes),
+                  const SizedBox(height: 12),
+                  KeyedSubtree(
+                    key: _nextPrayerKey,
+                    child: _nextPrayerCard(
+                      _nextPrayer(success.prayerTimes, success.nextDay),
+                    ),
+                  ),
+                  const SizedBox(height: 14),
+                ],
                 if (state is PrayerTimeLoading)
                   _loadingCard()
                 else if (state is PrayerTimeError)
@@ -141,15 +168,19 @@ class _PrayerTimesViewState extends State<_PrayerTimesView> {
     return Row(
       children: [
         Container(
-          width: 44,
-          height: 44,
+          width: 36,
+          height: 36,
           decoration: BoxDecoration(
             color: _ink,
-            borderRadius: BorderRadius.circular(14),
+            borderRadius: BorderRadius.circular(11),
           ),
-          child: const Icon(Icons.mosque_outlined, color: Colors.white),
+          child: const Icon(
+            Icons.mosque_outlined,
+            color: Colors.white,
+            size: 19,
+          ),
         ),
-        const SizedBox(width: 12),
+        const SizedBox(width: 9),
         const Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -158,14 +189,14 @@ class _PrayerTimesViewState extends State<_PrayerTimesView> {
                 'Prayer Times',
                 style: TextStyle(
                   color: _ink,
-                  fontSize: 23,
+                  fontSize: 18,
                   fontWeight: FontWeight.w800,
                   letterSpacing: -0.5,
                 ),
               ),
               Text(
                 'Your day, guided by prayer',
-                style: TextStyle(color: _muted, fontSize: 12),
+                style: TextStyle(color: _muted, fontSize: 10),
               ),
             ],
           ),
@@ -175,6 +206,9 @@ class _PrayerTimesViewState extends State<_PrayerTimesView> {
           icon: const Icon(Icons.refresh_rounded),
           color: _ink,
           tooltip: 'Refresh location',
+          visualDensity: VisualDensity.compact,
+          padding: EdgeInsets.zero,
+          constraints: const BoxConstraints.tightFor(width: 32, height: 32),
         ),
       ],
     );
@@ -187,10 +221,10 @@ class _PrayerTimesViewState extends State<_PrayerTimesView> {
         success?.location?.isManual ??
         (_selectedCity != null && _selectedCountry != null);
     return Container(
-      padding: const EdgeInsets.all(18),
+      padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(18),
         border: Border.all(color: const Color(0xFFE2EAE4)),
       ),
       child: Column(
@@ -198,56 +232,70 @@ class _PrayerTimesViewState extends State<_PrayerTimesView> {
         children: [
           Row(
             children: [
-              const Icon(Icons.location_on_outlined, color: _ink, size: 20),
-              const SizedBox(width: 7),
+              const Icon(Icons.location_on_outlined, color: _ink, size: 17),
+              const SizedBox(width: 5),
               Text(
                 isManual ? 'Manual location' : 'Current location',
                 style: const TextStyle(
                   color: _muted,
-                  fontSize: 12,
+                  fontSize: 10,
                   fontWeight: FontWeight.w700,
                   letterSpacing: 0.5,
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 6),
+          const SizedBox(height: 3),
           Text(
             city != null && country != null ? '$city, $country' : _locationMode,
             style: const TextStyle(
               color: _ink,
-              fontSize: 21,
+              fontSize: 17,
               fontWeight: FontWeight.w800,
             ),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 9),
           Wrap(
-            spacing: 8,
-            runSpacing: 8,
+            spacing: 6,
+            runSpacing: 6,
             children: [
               OutlinedButton.icon(
                 onPressed: () =>
                     context.read<PrayerTimeCubit>().useCurrentLocation(),
-                icon: const Icon(Icons.my_location_rounded, size: 17),
+                icon: const Icon(Icons.my_location_rounded, size: 14),
                 label: const Text('Use Current Location'),
                 style: OutlinedButton.styleFrom(
                   foregroundColor: _ink,
                   side: const BorderSide(color: Color(0xFFBBD0C4)),
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(9),
                   ),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 7,
+                  ),
+                  minimumSize: Size.zero,
+                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  visualDensity: VisualDensity.compact,
                 ),
               ),
               FilledButton.icon(
                 onPressed: _changeLocation,
-                icon: const Icon(Icons.edit_location_alt_outlined, size: 17),
+                icon: const Icon(Icons.edit_location_alt_outlined, size: 14),
                 label: const Text('Change'),
                 style: FilledButton.styleFrom(
                   backgroundColor: _ink,
                   foregroundColor: Colors.white,
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(9),
                   ),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 7,
+                  ),
+                  minimumSize: Size.zero,
+                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  visualDensity: VisualDensity.compact,
                 ),
               ),
             ],
@@ -300,14 +348,8 @@ class _PrayerTimesViewState extends State<_PrayerTimesView> {
     final nextPrayer = _nextPrayer(prayerTimes, success.nextDay);
     return Column(
       children: [
-        _dateCard(prayerTimes),
-        const SizedBox(height: 14),
-        _nextPrayerCard(nextPrayer),
-        const SizedBox(height: 24),
-        _sectionLabel('Today\'s schedule'),
-        const SizedBox(height: 9),
         _prayerSchedule(prayerTimes, nextPrayer.name),
-        const SizedBox(height: 24),
+        const SizedBox(height: 14),
         _secondaryCard(
           title: 'Night times',
           icon: Icons.nightlight_outlined,
@@ -323,58 +365,57 @@ class _PrayerTimesViewState extends State<_PrayerTimesView> {
 
   Widget _dateCard(PrayerTimes prayerTimes) {
     final date = _now;
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.end,
-      children: [
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                _dayName(date),
-                style: const TextStyle(
-                  color: _ink,
-                  fontSize: 30,
-                  fontWeight: FontWeight.w800,
-                  letterSpacing: -1,
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: const Color(0xFFE2EAE4)),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  _dayName(date),
+                  style: const TextStyle(
+                    color: _ink,
+                    fontSize: 21,
+                    fontWeight: FontWeight.w800,
+                  ),
                 ),
-              ),
-              const SizedBox(height: 3),
-              Text(
-                _displayDate(date),
-                style: const TextStyle(
-                  color: _muted,
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
+                const SizedBox(height: 2),
+                Text(
+                  _displayDate(date),
+                  style: const TextStyle(
+                    color: _muted,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
-        ),
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-          decoration: BoxDecoration(
-            color: _mint,
-            borderRadius: BorderRadius.circular(15),
-          ),
-          child: Column(
+          Container(width: 1, height: 46, color: const Color(0xFFE2EAE4)),
+          const SizedBox(width: 16),
+          Column(
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
-              const Text(
-                'HIJRI',
-                style: TextStyle(
-                  color: _muted,
-                  fontSize: 10,
-                  fontWeight: FontWeight.w800,
-                  letterSpacing: 1,
-                ),
-              ),
-              const SizedBox(height: 3),
               Text(
-                '${prayerTimes.hijriDate.day} ${prayerTimes.hijriDate.month}',
+                prayerTimes.hijriDate.day,
                 style: const TextStyle(
                   color: _ink,
-                  fontSize: 13,
+                  fontSize: 21,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+              Text(
+                prayerTimes.hijriDate.month,
+                style: const TextStyle(
+                  color: _muted,
+                  fontSize: 12,
                   fontWeight: FontWeight.w700,
                 ),
               ),
@@ -384,17 +425,17 @@ class _PrayerTimesViewState extends State<_PrayerTimesView> {
               ),
             ],
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 
   Widget _nextPrayerCard(_NextPrayer nextPrayer) {
     return Container(
-      padding: const EdgeInsets.fromLTRB(20, 18, 20, 20),
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 13),
       decoration: BoxDecoration(
         color: _ink,
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(18),
         boxShadow: const [
           BoxShadow(
             color: Color(0x24163A35),
@@ -403,56 +444,71 @@ class _PrayerTimesViewState extends State<_PrayerTimesView> {
           ),
         ],
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.center,
+      child: Row(
         children: [
           Container(
-            width: 48,
-            height: 48,
+            width: 36,
+            height: 36,
             decoration: BoxDecoration(
               color: Colors.white.withValues(alpha: 0.12),
               shape: BoxShape.circle,
             ),
-            child: const Icon(Icons.schedule_rounded, color: Colors.white),
-          ),
-          const SizedBox(height: 12),
-          const Text(
-            'NEXT PRAYER',
-            style: TextStyle(
-              color: Color(0xFFA8C9B8),
-              fontSize: 10,
-              fontWeight: FontWeight.w800,
-              letterSpacing: 1.2,
-            ),
-          ),
-          const SizedBox(height: 5),
-          Text(
-            nextPrayer.name,
-            style: const TextStyle(
+            child: const Icon(
+              Icons.schedule_rounded,
               color: Colors.white,
-              fontSize: 26,
-              fontWeight: FontWeight.w800,
+              size: 18,
             ),
           ),
-          const SizedBox(height: 3),
-          Text(
-            nextPrayer.time,
-            style: const TextStyle(color: Color(0xFFA8C9B8), fontSize: 13),
-          ),
-          const SizedBox(height: 12),
-          Text(
-            nextPrayer.remaining,
-            style: const TextStyle(
-              color: Color(0xFFE1F2E8),
-              fontSize: 32,
-              fontWeight: FontWeight.w800,
-              letterSpacing: 1.5,
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'NEXT PRAYER',
+                  style: TextStyle(
+                    color: Color(0xFFA8C9B8),
+                    fontSize: 9,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: 1,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  nextPrayer.name,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 20,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+                Text(
+                  nextPrayer.time,
+                  style: const TextStyle(
+                    color: Color(0xFFA8C9B8),
+                    fontSize: 11,
+                  ),
+                ),
+              ],
             ),
           ),
-          const SizedBox(height: 2),
-          const Text(
-            'remaining',
-            style: TextStyle(color: Color(0xFFA8C9B8), fontSize: 12),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              Text(
+                nextPrayer.remaining,
+                style: const TextStyle(
+                  color: Color(0xFFE1F2E8),
+                  fontSize: 21,
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: 0.8,
+                ),
+              ),
+              const Text(
+                'remaining',
+                style: TextStyle(color: Color(0xFFA8C9B8), fontSize: 10),
+              ),
+            ],
           ),
         ],
       ),
@@ -555,17 +611,6 @@ class _PrayerTimesViewState extends State<_PrayerTimesView> {
             ),
           ),
         ],
-      ),
-    );
-  }
-
-  Widget _sectionLabel(String title) {
-    return Text(
-      title,
-      style: const TextStyle(
-        color: _ink,
-        fontSize: 18,
-        fontWeight: FontWeight.w800,
       ),
     );
   }
