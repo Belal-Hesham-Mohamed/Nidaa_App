@@ -29,8 +29,9 @@ class _PrayerTimesView extends StatefulWidget {
 class _PrayerTimesViewState extends State<_PrayerTimesView> {
   static const _ink = Color(0xFF163A35);
   static const _muted = Color(0xFF6E7E79);
-  static const _surface = Color(0xFFF5F7F3);
   static const _mint = Color(0xFFDDEDE4);
+  static const _cardSurface = Color(0xD9FFFFFF);
+  static const _darkCardSurface = Color(0xEB163A35);
 
   String _locationMode = 'Current GPS Location';
   String? _selectedCountry;
@@ -107,7 +108,7 @@ class _PrayerTimesViewState extends State<_PrayerTimesView> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: _surface,
+      backgroundColor: const Color(0xFF081C2B),
       body: BlocListener<PrayerTimeCubit, PrayerTimeState>(
         listenWhen: (_, state) => state is NoInternetAvailable,
         listener: (context, state) {
@@ -115,64 +116,70 @@ class _PrayerTimesViewState extends State<_PrayerTimesView> {
             const SnackBar(content: Text('No internet available')),
           );
         },
-        child: SafeArea(
-          child: BlocBuilder<PrayerTimeCubit, PrayerTimeState>(
-            builder: (context, state) {
-              var visibleState = state;
-              while (visibleState is NoInternetAvailable) {
-                visibleState = visibleState.previousState;
-              }
-              final success = visibleState is PrayerTimeSuccess
-                  ? visibleState
-                  : null;
-              if (success != null && !_initialPositionSet) {
-                WidgetsBinding.instance.addPostFrameCallback((_) {
-                  final target = _nextPrayerKey.currentContext;
-                  if (target != null && mounted) {
-                    _initialPositionSet = true;
-                    Scrollable.ensureVisible(
-                      target,
-                      alignment: 0,
-                      duration: const Duration(milliseconds: 350),
-                      curve: Curves.easeOut,
-                    );
+        child: Stack(
+          children: [
+            const Positioned.fill(child: _NightBackdrop()),
+            SafeArea(
+              child: BlocBuilder<PrayerTimeCubit, PrayerTimeState>(
+                builder: (context, state) {
+                  var visibleState = state;
+                  while (visibleState is NoInternetAvailable) {
+                    visibleState = visibleState.previousState;
                   }
-                });
-              }
-              return ListView(
-                padding: const EdgeInsets.fromLTRB(20, 8, 20, 18),
-                children: [
-                  _topBar(),
-                  const SizedBox(height: 12),
-                  _locationCard(success),
-                  const SizedBox(height: 24),
-                  if (_locationError != null) _errorCard(_locationError!),
-                  if (success != null) ...[
-                    _dateCard(success.prayerTimes),
-                    const SizedBox(height: 12),
-                    KeyedSubtree(
-                      key: _nextPrayerKey,
-                      child: _nextPrayerCard(
-                        _nextPrayer(success.prayerTimes, success.nextDay),
-                      ),
-                    ),
-                    const SizedBox(height: 14),
-                  ],
-                  if (visibleState is PrayerTimeLoading)
-                    _loadingCard()
-                  else if (visibleState is PrayerTimeError)
-                    _errorCard(visibleState.message)
-                  else if (success != null)
-                    _prayerTimesCard(success)
-                  else if (_locationError == null)
-                    const Padding(
-                      padding: EdgeInsets.only(top: 48),
-                      child: Center(child: Text('Waiting for location...')),
-                    ),
-                ],
-              );
-            },
-          ),
+                  final success = visibleState is PrayerTimeSuccess
+                      ? visibleState
+                      : null;
+                  if (success != null && !_initialPositionSet) {
+                    WidgetsBinding.instance.addPostFrameCallback((_) {
+                      final target = _nextPrayerKey.currentContext;
+                      if (target != null && mounted) {
+                        _initialPositionSet = true;
+                        Scrollable.ensureVisible(
+                          target,
+                          alignment: 0,
+                          duration: const Duration(milliseconds: 350),
+                          curve: Curves.easeOut,
+                        );
+                      }
+                    });
+                  }
+                  return ListView(
+                    padding: const EdgeInsets.fromLTRB(20, 8, 20, 18),
+                    children: [
+                      _topBar(),
+                      const SizedBox(height: 12),
+                      _locationCard(success),
+                      const SizedBox(height: 24),
+                      if (_locationError != null) _errorCard(_locationError!),
+                      if (success != null) ...[
+                        _dateCard(),
+                        const SizedBox(height: 12),
+                        KeyedSubtree(
+                          key: _nextPrayerKey,
+                          child: _nextPrayerCard(
+                            _nextPrayer(success.prayerTimes, success.nextDay),
+                            success.prayerTimes,
+                          ),
+                        ),
+                        const SizedBox(height: 14),
+                      ],
+                      if (visibleState is PrayerTimeLoading)
+                        _loadingCard()
+                      else if (visibleState is PrayerTimeError)
+                        _errorCard(visibleState.message)
+                      else if (success != null)
+                        _prayerTimesCard(success)
+                      else if (_locationError == null)
+                        const Padding(
+                          padding: EdgeInsets.only(top: 48),
+                          child: Center(child: Text('Waiting for location...')),
+                        ),
+                    ],
+                  );
+                },
+              ),
+            ),
+          ],
         ),
       ),
     );
@@ -237,7 +244,7 @@ class _PrayerTimesViewState extends State<_PrayerTimesView> {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: _cardSurface,
         borderRadius: BorderRadius.circular(18),
         border: Border.all(color: const Color(0xFFE2EAE4)),
       ),
@@ -324,7 +331,7 @@ class _PrayerTimesViewState extends State<_PrayerTimesView> {
       margin: const EdgeInsets.only(bottom: 18),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: const Color(0xFFFFF2EF),
+        color: const Color(0xE6FFF2EF),
         borderRadius: BorderRadius.circular(18),
         border: Border.all(color: const Color(0xFFF3D2CC)),
       ),
@@ -377,78 +384,73 @@ class _PrayerTimesViewState extends State<_PrayerTimesView> {
     );
   }
 
-  Widget _dateCard(PrayerTimes prayerTimes) {
+  Widget _dateCard() {
     final date = _now;
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: const Color(0xFFE2EAE4)),
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  _dayName(date),
-                  style: const TextStyle(
-                    color: _ink,
-                    fontSize: 21,
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  _displayDate(date),
-                  style: const TextStyle(
-                    color: _muted,
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ],
+
+    return Transform.translate(
+      offset: const Offset(0, -12),
+      child: Container(
+        padding: const EdgeInsets.fromLTRB(14, 10, 16, 10),
+        decoration: BoxDecoration(
+          color: _cardSurface,
+          borderRadius: BorderRadius.circular(18),
+          border: Border.all(color: const Color(0xFFE2EAE4)),
+          boxShadow: const [
+            BoxShadow(
+              color: Color(0x14163A35),
+              blurRadius: 14,
+              offset: Offset(0, 7),
             ),
-          ),
-          Container(width: 1, height: 46, color: const Color(0xFFE2EAE4)),
-          const SizedBox(width: 16),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              Text(
-                prayerTimes.hijriDate.day,
-                style: const TextStyle(
-                  color: _ink,
-                  fontSize: 21,
-                  fontWeight: FontWeight.w800,
-                ),
+          ],
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 38,
+              height: 38,
+              decoration: BoxDecoration(
+                color: _mint,
+                borderRadius: BorderRadius.circular(12),
               ),
-              Text(
-                prayerTimes.hijriDate.month,
-                style: const TextStyle(
-                  color: _muted,
-                  fontSize: 12,
-                  fontWeight: FontWeight.w700,
-                ),
+              child: const Icon(
+                Icons.calendar_today_rounded,
+                color: _ink,
+                size: 18,
               ),
-              Text(
-                prayerTimes.hijriDate.year,
-                style: const TextStyle(color: _muted, fontSize: 11),
+            ),
+
+            const SizedBox(width: 11),
+
+            Text(
+              _dayName(date),
+              style: const TextStyle(
+                color: _ink,
+                fontSize: 19,
+                fontWeight: FontWeight.w800,
               ),
-            ],
-          ),
-        ],
+            ),
+
+            const Spacer(),
+
+            Text(
+              _displayDate(date),
+              style: const TextStyle(
+                color: _muted,
+                fontSize: 13,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
 
-  Widget _nextPrayerCard(_NextPrayer nextPrayer) {
+  Widget _nextPrayerCard(_NextPrayer nextPrayer, PrayerTimes prayerTimes) {
     return Container(
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 13),
       decoration: BoxDecoration(
-        color: _ink,
+        color: _darkCardSurface,
         borderRadius: BorderRadius.circular(18),
         boxShadow: const [
           BoxShadow(
@@ -461,8 +463,8 @@ class _PrayerTimesViewState extends State<_PrayerTimesView> {
       child: Row(
         children: [
           Container(
-            width: 36,
-            height: 120,
+            width: 32,
+            height: 72,
             decoration: BoxDecoration(
               color: Colors.white.withValues(alpha: 0.12),
               shape: BoxShape.circle,
@@ -473,7 +475,9 @@ class _PrayerTimesViewState extends State<_PrayerTimesView> {
               size: 18,
             ),
           ),
+
           const SizedBox(width: 10),
+
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -487,7 +491,9 @@ class _PrayerTimesViewState extends State<_PrayerTimesView> {
                     letterSpacing: 1,
                   ),
                 ),
+
                 const SizedBox(height: 2),
+
                 Text(
                   nextPrayer.name,
                   style: const TextStyle(
@@ -496,6 +502,7 @@ class _PrayerTimesViewState extends State<_PrayerTimesView> {
                     fontWeight: FontWeight.w800,
                   ),
                 ),
+
                 Text(
                   nextPrayer.time,
                   style: const TextStyle(
@@ -503,9 +510,92 @@ class _PrayerTimesViewState extends State<_PrayerTimesView> {
                     fontSize: 11,
                   ),
                 ),
+
+                const SizedBox(height: 8),
+
+                // Divider with center notch
+                SizedBox(
+                  height: 8,
+                  child: Stack(
+                    alignment: Alignment.center,
+                    children: [
+                      const Positioned(
+                        left: 0,
+                        right: 0,
+                        top: 3,
+                        child: Divider(
+                          color: Color(0x4DA8C9B8),
+                          thickness: 1,
+                          height: 1,
+                        ),
+                      ),
+
+                      Positioned(
+                        top: 0,
+                        child: Transform.rotate(
+                          angle: 0.785398,
+                          child: Container(width: 7, height: 7, color: _ink),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+
+                const SizedBox(height: 5),
+
+                Row(
+                  children: [
+                    Text(
+                      prayerTimes.hijriDate.day,
+                      style: const TextStyle(
+                        color: Color(0xFFE1F2E8),
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+
+                    const SizedBox(width: 7),
+
+                    const Text(
+                      '•',
+                      style: TextStyle(color: Color(0xFFA8C9B8), fontSize: 10),
+                    ),
+
+                    const SizedBox(width: 7),
+
+                    Text(
+                      prayerTimes.hijriDate.month,
+                      style: const TextStyle(
+                        color: Color(0xFFE1F2E8),
+                        fontSize: 11,
+                      ),
+                    ),
+
+                    const SizedBox(width: 7),
+
+                    const Text(
+                      '•',
+                      style: TextStyle(color: Color(0xFFA8C9B8), fontSize: 10),
+                    ),
+
+                    const SizedBox(width: 7),
+
+                    Text(
+                      prayerTimes.hijriDate.year,
+                      style: const TextStyle(
+                        color: Color(0xFFE1F2E8),
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ],
+                ),
               ],
             ),
           ),
+
+          const SizedBox(width: 10),
+
           Column(
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
@@ -518,6 +608,7 @@ class _PrayerTimesViewState extends State<_PrayerTimesView> {
                   letterSpacing: 0.8,
                 ),
               ),
+
               const Text(
                 'remaining',
                 style: TextStyle(color: Color(0xFFA8C9B8), fontSize: 10),
@@ -548,7 +639,7 @@ class _PrayerTimesViewState extends State<_PrayerTimesView> {
     ];
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: _cardSurface,
         borderRadius: BorderRadius.circular(22),
         border: Border.all(color: const Color(0xFFE2EAE4)),
       ),
@@ -632,7 +723,7 @@ class _PrayerTimesViewState extends State<_PrayerTimesView> {
     return Container(
       padding: const EdgeInsets.fromLTRB(16, 14, 16, 10),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: _cardSurface,
         borderRadius: BorderRadius.circular(20),
         border: Border.all(color: const Color(0xFFE2EAE4)),
       ),
@@ -773,6 +864,90 @@ class _PrayerTimesViewState extends State<_PrayerTimesView> {
         .replaceAll(RegExp(r'\s*\([^)]*\)'), '')
         .replaceAll(RegExp(r'\s+(EST|EDT|UTC)\b'), '')
         .trim();
+  }
+}
+
+class _NightBackdrop extends StatelessWidget {
+  const _NightBackdrop();
+
+  @override
+  Widget build(BuildContext context) {
+    return DecoratedBox(
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [Color(0xFF071A2A), Color(0xFF10344A), Color(0xFF183C4B)],
+        ),
+      ),
+      child: Stack(
+        children: [
+          Positioned(
+            top: -80,
+            right: -50,
+            child: Container(
+              width: 260,
+              height: 260,
+              decoration: const BoxDecoration(
+                shape: BoxShape.circle,
+                color: Color(0x1C9BC9C4),
+                boxShadow: [
+                  BoxShadow(
+                    color: Color(0x249BC9C4),
+                    blurRadius: 80,
+                    spreadRadius: 16,
+                  ),
+                ],
+              ),
+            ),
+          ),
+          Positioned(
+            left: -70,
+            top: 270,
+            child: Container(
+              width: 220,
+              height: 68,
+              decoration: const BoxDecoration(
+                borderRadius: BorderRadius.all(Radius.circular(60)),
+                color: Color(0x0FBCD8D2),
+                boxShadow: [
+                  BoxShadow(
+                    color: Color(0x1ABCD8D2),
+                    blurRadius: 34,
+                    spreadRadius: 10,
+                  ),
+                ],
+              ),
+            ),
+          ),
+          Positioned(right: 32, top: 118, child: _star(3, 0xB8D9E5E2)),
+          Positioned(left: 42, top: 154, child: _star(2, 0x8CC7E1E0)),
+          Positioned(right: 118, top: 220, child: _star(2, 0x99E0EEE9)),
+          Positioned(left: 18, top: 365, child: _star(3, 0x7FC6E1E0)),
+          Positioned(right: 24, top: 470, child: _star(2, 0x8CE0EEE9)),
+          Positioned(left: 130, top: 620, child: _star(2, 0x70C6E1E0)),
+          Positioned(right: 88, bottom: 130, child: _star(3, 0x80D6E7E4)),
+        ],
+      ),
+    );
+  }
+
+  Widget _star(double size, int colorValue) {
+    return Container(
+      width: size,
+      height: size,
+      decoration: BoxDecoration(
+        color: Color(colorValue),
+        shape: BoxShape.circle,
+        boxShadow: [
+          BoxShadow(
+            color: Color(colorValue),
+            blurRadius: size * 2,
+            spreadRadius: size / 2,
+          ),
+        ],
+      ),
+    );
   }
 }
 
