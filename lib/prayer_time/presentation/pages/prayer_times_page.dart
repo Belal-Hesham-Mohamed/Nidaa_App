@@ -61,14 +61,13 @@ class _PrayerTimesViewState extends State<_PrayerTimesView> {
   }
 
   Future<void> _loadCurrentLocation() async {
-    setState(() {
-      _locationError = null;
-    });
-
     await context.read<PrayerTimeCubit>().start(forceCurrentLocation: true);
   }
 
   Future<void> _changeLocation() async {
+    final cubit = context.read<PrayerTimeCubit>();
+    if (!await cubit.ensureInternetAvailable()) return;
+
     final countries = await UniCountryServices.instance.getCountriesAndCities();
     if (!mounted) return;
 
@@ -92,73 +91,88 @@ class _PrayerTimesViewState extends State<_PrayerTimesView> {
     );
     if (!mounted || selectedCity == null) return;
 
+    await cubit.useManualLocation(
+      city: selectedCity.nameEn,
+      country: selectedCountry.nameEn,
+    );
+    if (!mounted) return;
     setState(() {
       _locationMode = 'Manual Location';
       _selectedCountry = selectedCountry.nameEn;
       _selectedCity = selectedCity.nameEn;
       _locationError = null;
     });
-    context.read<PrayerTimeCubit>().useManualLocation(
-      city: selectedCity.nameEn,
-      country: selectedCountry.nameEn,
-    );
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: _surface,
-      body: SafeArea(
-        child: BlocBuilder<PrayerTimeCubit, PrayerTimeState>(
-          builder: (context, state) {
-            final success = state is PrayerTimeSuccess ? state : null;
-            if (success != null && !_initialPositionSet) {
-              WidgetsBinding.instance.addPostFrameCallback((_) {
-                final target = _nextPrayerKey.currentContext;
-                if (target != null && mounted) {
-                  _initialPositionSet = true;
-                  Scrollable.ensureVisible(
-                    target,
-                    alignment: 0,
-                    duration: const Duration(milliseconds: 350),
-                    curve: Curves.easeOut,
-                  );
-                }
-              });
-            }
-            return ListView(
-              padding: const EdgeInsets.fromLTRB(20, 8, 20, 18),
-              children: [
-                _topBar(),
-                const SizedBox(height: 12),
-                _locationCard(success),
-                const SizedBox(height: 24),
-                if (_locationError != null) _errorCard(_locationError!),
-                if (success != null) ...[
-                  _dateCard(success.prayerTimes),
+      body: BlocListener<PrayerTimeCubit, PrayerTimeState>(
+        listenWhen: (_, state) => state is NoInternetAvailable,
+        listener: (context, state) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('No internet available')),
+          );
+        },
+        child: SafeArea(
+          child: BlocBuilder<PrayerTimeCubit, PrayerTimeState>(
+            builder: (context, state) {
+              var visibleState = state;
+              while (visibleState is NoInternetAvailable) {
+                visibleState = visibleState.previousState;
+              }
+              final success = visibleState is PrayerTimeSuccess
+                  ? visibleState
+                  : null;
+              if (success != null && !_initialPositionSet) {
+                WidgetsBinding.instance.addPostFrameCallback((_) {
+                  final target = _nextPrayerKey.currentContext;
+                  if (target != null && mounted) {
+                    _initialPositionSet = true;
+                    Scrollable.ensureVisible(
+                      target,
+                      alignment: 0,
+                      duration: const Duration(milliseconds: 350),
+                      curve: Curves.easeOut,
+                    );
+                  }
+                });
+              }
+              return ListView(
+                padding: const EdgeInsets.fromLTRB(20, 8, 20, 18),
+                children: [
+                  _topBar(),
                   const SizedBox(height: 12),
-                  KeyedSubtree(
-                    key: _nextPrayerKey,
-                    child: _nextPrayerCard(
-                      _nextPrayer(success.prayerTimes, success.nextDay),
+                  _locationCard(success),
+                  const SizedBox(height: 24),
+                  if (_locationError != null) _errorCard(_locationError!),
+                  if (success != null) ...[
+                    _dateCard(success.prayerTimes),
+                    const SizedBox(height: 12),
+                    KeyedSubtree(
+                      key: _nextPrayerKey,
+                      child: _nextPrayerCard(
+                        _nextPrayer(success.prayerTimes, success.nextDay),
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 14),
+                    const SizedBox(height: 14),
+                  ],
+                  if (visibleState is PrayerTimeLoading)
+                    _loadingCard()
+                  else if (visibleState is PrayerTimeError)
+                    _errorCard(visibleState.message)
+                  else if (success != null)
+                    _prayerTimesCard(success)
+                  else if (_locationError == null)
+                    const Padding(
+                      padding: EdgeInsets.only(top: 48),
+                      child: Center(child: Text('Waiting for location...')),
+                    ),
                 ],
-                if (state is PrayerTimeLoading)
-                  _loadingCard()
-                else if (state is PrayerTimeError)
-                  _errorCard(state.message)
-                else if (success != null)
-                  _prayerTimesCard(success)
-                else if (_locationError == null)
-                  const Padding(
-                    padding: EdgeInsets.only(top: 48),
-                    child: Center(child: Text('Waiting for location...')),
-                  ),
-              ],
-            );
-          },
+              );
+            },
+          ),
         ),
       ),
     );
@@ -448,7 +462,7 @@ class _PrayerTimesViewState extends State<_PrayerTimesView> {
         children: [
           Container(
             width: 36,
-            height: 36,
+            height: 120,
             decoration: BoxDecoration(
               color: Colors.white.withValues(alpha: 0.12),
               shape: BoxShape.circle,
@@ -525,11 +539,6 @@ class _PrayerTimesViewState extends State<_PrayerTimesView> {
       ),
       _PrayerItem('Dhuhr', prayerTimes.prayer.dhuhr, Icons.sunny),
       _PrayerItem('Asr', prayerTimes.prayer.asr, Icons.brightness_5_outlined),
-      _PrayerItem(
-        'Sunset',
-        prayerTimes.prayer.sunset,
-        Icons.brightness_6_outlined,
-      ),
       _PrayerItem(
         'Maghrib',
         prayerTimes.prayer.maghrib,
@@ -673,7 +682,6 @@ class _PrayerTimesViewState extends State<_PrayerTimesView> {
       'Sunrise': today.prayer.sunrise,
       'Dhuhr': today.prayer.dhuhr,
       'Asr': today.prayer.asr,
-      'Sunset': today.prayer.sunset,
       'Maghrib': today.prayer.maghrib,
       'Isha': today.prayer.isha,
     };

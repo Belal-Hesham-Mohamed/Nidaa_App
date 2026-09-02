@@ -26,6 +26,8 @@ class PrayerTimeCubit extends Cubit<PrayerTimeState> {
   }) : super(PrayerTimeInitial());
 
   Future<void> start({bool forceCurrentLocation = false}) async {
+    if (forceCurrentLocation && !await ensureInternetAvailable()) return;
+
     emit(PrayerTimeLoading());
     final result = await loadPrayerTimes(
       forceCurrentLocation: forceCurrentLocation,
@@ -46,10 +48,18 @@ class PrayerTimeCubit extends Cubit<PrayerTimeState> {
     await start(forceCurrentLocation: true);
   }
 
+  Future<bool> ensureInternetAvailable() async {
+    final hasInternet = await prayerTimesRepository.hasInternetConnection();
+    if (!hasInternet) emit(NoInternetAvailable(state));
+    return hasInternet;
+  }
+
   Future<void> useManualLocation({
     required String city,
     required String country,
   }) async {
+    if (!await ensureInternetAvailable()) return;
+
     await prayerTimesRepository.clearCachedPrayerTimes();
     await saveLocation(
       Location(
@@ -69,6 +79,8 @@ class PrayerTimeCubit extends Cubit<PrayerTimeState> {
     required double longitude,
     required String date,
   }) async {
+    if (!await ensureInternetAvailable()) return;
+
     emit(PrayerTimeLoading());
 
     final result = await getPrayerTimeCoordinates(
@@ -88,6 +100,8 @@ class PrayerTimeCubit extends Cubit<PrayerTimeState> {
     required String country,
     required String date,
   }) async {
+    if (!await ensureInternetAvailable()) return;
+
     emit(PrayerTimeLoading());
 
     final result = await getPrayerTimesByCity(

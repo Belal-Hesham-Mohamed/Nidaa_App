@@ -5,7 +5,6 @@ class Prayer extends Equatable {
   final String sunrise;
   final String dhuhr;
   final String asr;
-  final String sunset;
   final String maghrib;
   final String isha;
 
@@ -14,13 +13,12 @@ class Prayer extends Equatable {
     required this.sunrise,
     required this.dhuhr,
     required this.asr,
-    required this.sunset,
     required this.maghrib,
     required this.isha,
   });
 
   @override
-  List<Object?> get props => [fajr, sunrise, dhuhr, asr, sunset, maghrib, isha];
+  List<Object?> get props => [fajr, sunrise, dhuhr, asr, maghrib, isha];
 }
 
 class NightTimes extends Equatable {

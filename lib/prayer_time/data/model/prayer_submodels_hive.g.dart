@@ -17,7 +17,6 @@ class PrayerHiveModelAdapter extends TypeAdapter<PrayerHiveModel> {
       sunrise: fields[1] as String,
       dhuhr: fields[2] as String,
       asr: fields[3] as String,
-      sunset: fields[4] as String,
       maghrib: fields[5] as String,
       isha: fields[6] as String,
     );
@@ -26,7 +25,7 @@ class PrayerHiveModelAdapter extends TypeAdapter<PrayerHiveModel> {
   @override
   void write(BinaryWriter writer, PrayerHiveModel obj) {
     writer
-      ..writeByte(7)
+      ..writeByte(6)
       ..writeByte(0)
       ..write(obj.fajr)
       ..writeByte(1)
@@ -35,8 +34,6 @@ class PrayerHiveModelAdapter extends TypeAdapter<PrayerHiveModel> {
       ..write(obj.dhuhr)
       ..writeByte(3)
       ..write(obj.asr)
-      ..writeByte(4)
-      ..write(obj.sunset)
       ..writeByte(5)
       ..write(obj.maghrib)
       ..writeByte(6)

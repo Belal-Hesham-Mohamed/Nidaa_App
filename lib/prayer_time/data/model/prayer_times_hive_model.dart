@@ -33,7 +33,6 @@ class PrayerTimesHiveModel {
         sunrise: prayerTimes.prayer.sunrise,
         dhuhr: prayerTimes.prayer.dhuhr,
         asr: prayerTimes.prayer.asr,
-        sunset: prayerTimes.prayer.sunset,
         maghrib: prayerTimes.prayer.maghrib,
         isha: prayerTimes.prayer.isha,
       ),

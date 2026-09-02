@@ -6,7 +6,6 @@ class PrayerModel extends Prayer {
     required super.sunrise,
     required super.dhuhr,
     required super.asr,
-    required super.sunset,
     required super.maghrib,
     required super.isha,
   });
@@ -17,7 +16,6 @@ class PrayerModel extends Prayer {
       sunrise: json['Sunrise'].toString(),
       dhuhr: json['Dhuhr'].toString(),
       asr: json['Asr'].toString(),
-      sunset: json['Sunset'].toString(),
       maghrib: json['Maghrib'].toString(),
       isha: json['Isha'].toString(),
     );

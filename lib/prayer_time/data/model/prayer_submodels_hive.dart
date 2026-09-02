@@ -10,7 +10,6 @@ class PrayerHiveModel extends Prayer {
     required super.sunrise,
     required super.dhuhr,
     required super.asr,
-    required super.sunset,
     required super.maghrib,
     required super.isha,
   });

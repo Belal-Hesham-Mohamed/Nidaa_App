@@ -7,9 +7,22 @@ sealed class PrayerTimeState extends Equatable {
   List<Object?> get props => [];
 }
 
-final class PrayerTimeInitial extends PrayerTimeState {}
+final class PrayerTimeInitial extends PrayerTimeState {
+  const PrayerTimeInitial();
+}
 
 final class PrayerTimeLoading extends PrayerTimeState {}
+
+final class NoInternetAvailable extends PrayerTimeState {
+  final PrayerTimeState previousState;
+  final Object _eventToken;
+
+  NoInternetAvailable([this.previousState = const PrayerTimeInitial()])
+    : _eventToken = Object();
+
+  @override
+  List<Object> get props => [previousState, _eventToken];
+}
 
 final class PrayerTimeSuccess extends PrayerTimeState {
   final PrayerTimes prayerTimes;
