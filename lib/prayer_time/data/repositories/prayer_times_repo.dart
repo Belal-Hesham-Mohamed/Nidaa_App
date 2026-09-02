@@ -16,6 +16,25 @@ class PrayerTimesRepositoryImpl implements PrayerTimesRepositoryDomain {
   });
 
   @override
+  Future<bool> hasInternetConnection() =>
+      remoteDataSource.checkInternetConnection();
+
+  @override
+  List<PrayerTimes> getCachedPrayerTimes() =>
+      localDataSource.getCachedPrayerTimes();
+
+  @override
+  Future<void> cachePrayerTimes(List<PrayerTimes> prayerTimes) =>
+      localDataSource.cachePrayerTimes(prayerTimes);
+
+  @override
+  Future<void> clearCachedPrayerTimes() => localDataSource.clearPrayerTimes();
+
+  @override
+  Future<void> removeCachedPrayerTimesBefore(DateTime date) =>
+      localDataSource.removePrayerTimesBefore(date);
+
+  @override
   Future<Either<Failure, PrayerTimes>> getPrayerTimesByCoordinates({
     required double latitude,
     required double longitude,
@@ -27,27 +46,10 @@ class PrayerTimesRepositoryImpl implements PrayerTimesRepositoryDomain {
         longitude: longitude,
         date: date,
       );
-
-      await localDataSource.cachePrayerTimes(result);
+      await localDataSource.cachePrayerTimes([result]);
       return Right(result);
-    } on PrayerTimesNetworkException {
-      final cached = localDataSource.getCachedPrayerTimes();
-      if (cached != null) {
-        return Right(cached);
-      }
-      return Left(PrayerTimesNetworkFailure());
-    } on PrayerTimesServerException {
-      final cached = localDataSource.getCachedPrayerTimes();
-      if (cached != null) {
-        return Right(cached);
-      }
-      return Left(PrayerTimesServerFailure());
-    } on PrayerTimesException {
-      final cached = localDataSource.getCachedPrayerTimes();
-      if (cached != null) {
-        return Right(cached);
-      }
-      return Left(PrayerTimesFailure());
+    } on PrayerTimesException catch (exception) {
+      return Left(_failureFor(exception));
     }
   }
 
@@ -63,27 +65,63 @@ class PrayerTimesRepositoryImpl implements PrayerTimesRepositoryDomain {
         country: country,
         date: date,
       );
+      await localDataSource.cachePrayerTimes([result]);
+      return Right(result);
+    } on PrayerTimesException catch (exception) {
+      return Left(_failureFor(exception));
+    }
+  }
 
+  @override
+  Future<Either<Failure, List<PrayerTimes>>>
+  getPrayerTimesCalendarByCoordinates({
+    required double latitude,
+    required double longitude,
+    required int month,
+    required int year,
+  }) async {
+    try {
+      final result = await remoteDataSource.getPrayerTimesCalendarByCoordinates(
+        latitude: latitude,
+        longitude: longitude,
+        month: month,
+        year: year,
+      );
       await localDataSource.cachePrayerTimes(result);
       return Right(result);
-    } on PrayerTimesNetworkException {
-      final cached = localDataSource.getCachedPrayerTimes();
-      if (cached != null) {
-        return Right(cached);
-      }
-      return Left(PrayerTimesNetworkFailure());
-    } on PrayerTimesServerException {
-      final cached = localDataSource.getCachedPrayerTimes();
-      if (cached != null) {
-        return Right(cached);
-      }
-      return Left(PrayerTimesServerFailure());
-    } on PrayerTimesException {
-      final cached = localDataSource.getCachedPrayerTimes();
-      if (cached != null) {
-        return Right(cached);
-      }
-      return Left(PrayerTimesFailure());
+    } on PrayerTimesException catch (exception) {
+      return Left(_failureFor(exception));
     }
+  }
+
+  @override
+  Future<Either<Failure, List<PrayerTimes>>> getPrayerTimesCalendarByCity({
+    required String city,
+    required String country,
+    required int month,
+    required int year,
+  }) async {
+    try {
+      final result = await remoteDataSource.getPrayerTimesCalendarByCity(
+        city: city,
+        country: country,
+        month: month,
+        year: year,
+      );
+      await localDataSource.cachePrayerTimes(result);
+      return Right(result);
+    } on PrayerTimesException catch (exception) {
+      return Left(_failureFor(exception));
+    }
+  }
+
+  Failure _failureFor(PrayerTimesException exception) {
+    if (exception is PrayerTimesNetworkException) {
+      return const PrayerTimesNetworkFailure();
+    }
+    if (exception is PrayerTimesServerException) {
+      return const PrayerTimesServerFailure();
+    }
+    return const PrayerTimesFailure();
   }
 }

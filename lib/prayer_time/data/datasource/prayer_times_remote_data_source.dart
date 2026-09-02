@@ -4,13 +4,15 @@ import 'package:nidaa/prayer_time/data/exception/prayer_times_exception.dart';
 import 'package:nidaa/prayer_time/data/model/prayer_times_model.dart';
 
 abstract class PrayerTimesRemoteDataSource {
+  Future<bool> checkInternetConnection();
+
   Future<PrayerTimesModel> getPrayerTimesByCoordinates({
     required double latitude,
     required double longitude,
     required String date,
   });
 
-  Future<PrayerTimesModel> getPrayerTimesCalendarByCoordinates({
+  Future<List<PrayerTimesModel>> getPrayerTimesCalendarByCoordinates({
     required double latitude,
     required double longitude,
     required int month,
@@ -23,7 +25,7 @@ abstract class PrayerTimesRemoteDataSource {
     required String date,
   });
 
-  Future<PrayerTimesModel> getPrayerTimesCalendarByCity({
+  Future<List<PrayerTimesModel>> getPrayerTimesCalendarByCity({
     required String city,
     required String country,
     required int month,
@@ -35,6 +37,19 @@ class PrayerTimesRemoteDataSourceImpl implements PrayerTimesRemoteDataSource {
   final Dio dio;
 
   PrayerTimesRemoteDataSourceImpl({Dio? dio}) : dio = dio ?? Dio();
+
+  @override
+  Future<bool> checkInternetConnection() async {
+    try {
+      await dio.get(
+        PrayerTimesApiConstants.baseUrl,
+        options: Options(validateStatus: (_) => true),
+      );
+      return true;
+    } on DioException {
+      return false;
+    }
+  }
 
   @override
   Future<PrayerTimesModel> getPrayerTimesByCoordinates({
@@ -52,7 +67,7 @@ class PrayerTimesRemoteDataSourceImpl implements PrayerTimesRemoteDataSource {
   }
 
   @override
-  Future<PrayerTimesModel> getPrayerTimesCalendarByCoordinates({
+  Future<List<PrayerTimesModel>> getPrayerTimesCalendarByCoordinates({
     required double latitude,
     required double longitude,
     required int month,
@@ -65,7 +80,7 @@ class PrayerTimesRemoteDataSourceImpl implements PrayerTimesRemoteDataSource {
       year: year,
     );
 
-    return _getPrayerTimes(url);
+    return _getPrayerTimesCalendar(url);
   }
 
   @override
@@ -84,7 +99,7 @@ class PrayerTimesRemoteDataSourceImpl implements PrayerTimesRemoteDataSource {
   }
 
   @override
-  Future<PrayerTimesModel> getPrayerTimesCalendarByCity({
+  Future<List<PrayerTimesModel>> getPrayerTimesCalendarByCity({
     required String city,
     required String country,
     required int month,
@@ -97,7 +112,7 @@ class PrayerTimesRemoteDataSourceImpl implements PrayerTimesRemoteDataSource {
       year: year,
     );
 
-    return _getPrayerTimes(url);
+    return _getPrayerTimesCalendar(url);
   }
 
   Future<PrayerTimesModel> _getPrayerTimes(String url) async {
@@ -109,6 +124,30 @@ class PrayerTimesRemoteDataSourceImpl implements PrayerTimesRemoteDataSource {
       }
 
       return PrayerTimesModel.fromJson(response.data as Map<String, dynamic>);
+    } on DioException catch (exception) {
+      throw PrayerTimesNetworkException(
+        exception.message ?? 'Failed to connect to prayer times service',
+      );
+    } on PrayerTimesServerException {
+      rethrow;
+    } on PrayerTimesException {
+      rethrow;
+    } catch (exception) {
+      throw PrayerTimesException(exception.toString());
+    }
+  }
+
+  Future<List<PrayerTimesModel>> _getPrayerTimesCalendar(String url) async {
+    try {
+      final response = await dio.get(url);
+
+      if (response.statusCode != 200) {
+        throw const PrayerTimesServerException('Failed to load prayer times');
+      }
+
+      return PrayerTimesModel.fromCalendarJson(
+        response.data as Map<String, dynamic>,
+      );
     } on DioException catch (exception) {
       throw PrayerTimesNetworkException(
         exception.message ?? 'Failed to connect to prayer times service',

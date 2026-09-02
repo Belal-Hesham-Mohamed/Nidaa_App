@@ -20,6 +20,11 @@ class PrayerTimesNetworkFailure extends Failure {
     : super('Unable to connect to the prayer times service');
 }
 
+class PrayerTimesNoInternetFailure extends Failure {
+  const PrayerTimesNoInternetFailure()
+    : super('Check your internet connection');
+}
+
 class PrayerTimesServerFailure extends Failure {
   const PrayerTimesServerFailure()
     : super('The prayer times service returned an error');

@@ -1,20 +1,69 @@
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:nidaa/location/domain/entities/location.dart';
+import 'package:nidaa/location/domain/usecase/get_current_loc_usecase.dart';
 import 'package:nidaa/prayer_time/domain/entities/prayer_time.dart';
 import 'package:nidaa/prayer_time/domain/usecase/prayer_time_city.dart';
 import 'package:nidaa/prayer_time/domain/usecase/prayer_time_coordinates.dart';
+import 'package:nidaa/prayer_time/domain/usecase/load_prayer_times.dart';
+import 'package:nidaa/prayer_time/domain/repositories/prayer_time_repo_domain.dart';
 
 part 'prayer_time_state.dart';
 
 class PrayerTimeCubit extends Cubit<PrayerTimeState> {
   final GetPrayerTimeCoordinates getPrayerTimeCoordinates;
   final GetPrayerTimesByCity getPrayerTimesByCity;
+  final LoadPrayerTimes loadPrayerTimes;
+  final SaveLocation saveLocation;
+  final PrayerTimesRepositoryDomain prayerTimesRepository;
 
   PrayerTimeCubit({
     required this.getPrayerTimeCoordinates,
     required this.getPrayerTimesByCity,
+    required this.loadPrayerTimes,
+    required this.saveLocation,
+    required this.prayerTimesRepository,
   }) : super(PrayerTimeInitial());
-//if date and location 
+
+  Future<void> start({bool forceCurrentLocation = false}) async {
+    emit(PrayerTimeLoading());
+    final result = await loadPrayerTimes(
+      forceCurrentLocation: forceCurrentLocation,
+    );
+    result.fold(
+      (failure) => emit(PrayerTimeError(failure.massage)),
+      (value) => emit(
+        PrayerTimeSuccess(
+          value.today,
+          location: value.location,
+          nextDay: value.nextDay,
+        ),
+      ),
+    );
+  }
+
+  Future<void> useCurrentLocation() async {
+    await start(forceCurrentLocation: true);
+  }
+
+  Future<void> useManualLocation({
+    required String city,
+    required String country,
+  }) async {
+    await prayerTimesRepository.clearCachedPrayerTimes();
+    await saveLocation(
+      Location(
+        latitude: 0,
+        longitude: 0,
+        city: city,
+        country: country,
+        isManual: true,
+      ),
+    );
+    await start();
+  }
+
+  //if date and location
   Future<void> getPrayerTimeByCoordinates({
     required double latitude,
     required double longitude,

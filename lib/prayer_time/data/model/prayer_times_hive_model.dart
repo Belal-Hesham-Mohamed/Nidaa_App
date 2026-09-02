@@ -6,6 +6,9 @@ part 'prayer_times_hive_model.g.dart';
 
 @HiveType(typeId: 1)
 class PrayerTimesHiveModel {
+  @HiveField(3)
+  final String date;
+
   @HiveField(0)
   final PrayerHiveModel prayer;
 
@@ -16,6 +19,7 @@ class PrayerTimesHiveModel {
   final HijriDateHiveModel hijriDate;
 
   const PrayerTimesHiveModel({
+    required this.date,
     required this.prayer,
     required this.nightTimes,
     required this.hijriDate,
@@ -23,6 +27,7 @@ class PrayerTimesHiveModel {
 
   factory PrayerTimesHiveModel.fromEntity(PrayerTimes prayerTimes) {
     return PrayerTimesHiveModel(
+      date: prayerTimes.date,
       prayer: PrayerHiveModel(
         fajr: prayerTimes.prayer.fajr,
         sunrise: prayerTimes.prayer.sunrise,
@@ -47,6 +52,7 @@ class PrayerTimesHiveModel {
 
   PrayerTimes toEntity() {
     return PrayerTimes(
+      date: date,
       prayer: prayer,
       nightTimes: nightTimes,
       hijriDate: hijriDate,

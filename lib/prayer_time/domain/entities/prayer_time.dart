@@ -20,15 +20,7 @@ class Prayer extends Equatable {
   });
 
   @override
-  List<Object?> get props => [
-        fajr,
-        sunrise,
-        dhuhr,
-        asr,
-        sunset,
-        maghrib,
-        isha,
-      ];
+  List<Object?> get props => [fajr, sunrise, dhuhr, asr, sunset, maghrib, isha];
 }
 
 class NightTimes extends Equatable {
@@ -43,11 +35,7 @@ class NightTimes extends Equatable {
   });
 
   @override
-  List<Object?> get props => [
-        midnight,
-        firstThird,
-        lastThird,
-      ];
+  List<Object?> get props => [midnight, firstThird, lastThird];
 }
 
 class HijriDate extends Equatable {
@@ -55,35 +43,25 @@ class HijriDate extends Equatable {
   final String month;
   final String year;
 
-  const HijriDate({
-    required this.day,
-    required this.month,
-    required this.year,
-  });
+  const HijriDate({required this.day, required this.month, required this.year});
 
   @override
-  List<Object?> get props => [
-        day,
-        month,
-        year,
-      ];
+  List<Object?> get props => [day, month, year];
 }
 
 class PrayerTimes extends Equatable {
+  final String date;
   final Prayer prayer;
   final NightTimes nightTimes;
   final HijriDate hijriDate;
 
   const PrayerTimes({
+    this.date = '',
     required this.prayer,
     required this.nightTimes,
     required this.hijriDate,
   });
 
   @override
-  List<Object?> get props => [
-        prayer,
-        nightTimes,
-        hijriDate,
-      ];
+  List<Object?> get props => [date, prayer, nightTimes, hijriDate];
 }

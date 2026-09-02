@@ -1,4 +1,3 @@
-
 import '../../domain/entities/location.dart';
 import 'package:hive/hive.dart';
 
@@ -35,6 +34,7 @@ class LocationModel {
       longitude: longitude,
       country: country,
       city: city,
+      isManual: isManual,
     );
   }
 }

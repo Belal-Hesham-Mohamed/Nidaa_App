@@ -13,6 +13,7 @@ class PrayerTimesHiveModelAdapter extends TypeAdapter<PrayerTimesHiveModel> {
       for (int i = 0; i < numOfFields; i++) reader.readByte(): reader.read(),
     };
     return PrayerTimesHiveModel(
+      date: (fields[3] as String?) ?? '',
       prayer: fields[0] as PrayerHiveModel,
       nightTimes: fields[1] as NightTimesHiveModel,
       hijriDate: fields[2] as HijriDateHiveModel,
@@ -22,13 +23,15 @@ class PrayerTimesHiveModelAdapter extends TypeAdapter<PrayerTimesHiveModel> {
   @override
   void write(BinaryWriter writer, PrayerTimesHiveModel obj) {
     writer
-      ..writeByte(3)
+      ..writeByte(4)
       ..writeByte(0)
       ..write(obj.prayer)
       ..writeByte(1)
       ..write(obj.nightTimes)
       ..writeByte(2)
-      ..write(obj.hijriDate);
+      ..write(obj.hijriDate)
+      ..writeByte(3)
+      ..write(obj.date);
   }
 
   @override

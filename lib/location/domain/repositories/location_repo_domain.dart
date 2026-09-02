@@ -3,6 +3,7 @@ import 'package:nidaa/core/error/failure.dart';
 import 'package:nidaa/location/domain/entities/location.dart';
 
 abstract class LocationRepoDomain {
-Future<Either<Failure, Location>> getCurrentLocation();
-
+  Future<Either<Failure, Location>> getCurrentLocation();
+  Location? getSavedLocation();
+  Future<void> saveLocation(Location location);
 }
