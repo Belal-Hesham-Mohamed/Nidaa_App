@@ -18,11 +18,15 @@ class LocationModel {
   @HiveField(3)
   final String city;
 
+  @HiveField(4)
+  final bool isManual;
+
   const LocationModel({
     required this.latitude,
     required this.longitude,
     required this.country,
     required this.city,
+    this.isManual = false,
   });
 
   Location toEntity() {

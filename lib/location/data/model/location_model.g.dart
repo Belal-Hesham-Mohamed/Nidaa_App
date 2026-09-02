@@ -21,13 +21,14 @@ class LocationModelAdapter extends TypeAdapter<LocationModel> {
       longitude: fields[1] as double,
       country: fields[2] as String,
       city: fields[3] as String,
+      isManual: (fields[4] as bool?) ?? false,
     );
   }
 
   @override
   void write(BinaryWriter writer, LocationModel obj) {
     writer
-      ..writeByte(4)
+      ..writeByte(5)
       ..writeByte(0)
       ..write(obj.latitude)
       ..writeByte(1)
@@ -35,7 +36,9 @@ class LocationModelAdapter extends TypeAdapter<LocationModel> {
       ..writeByte(2)
       ..write(obj.country)
       ..writeByte(3)
-      ..write(obj.city);
+      ..write(obj.city)
+      ..writeByte(4)
+      ..write(obj.isManual);
   }
 
   @override

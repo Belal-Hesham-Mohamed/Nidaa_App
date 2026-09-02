@@ -10,10 +10,24 @@ abstract class PrayerTimesRemoteDataSource {
     required String date,
   });
 
+  Future<PrayerTimesModel> getPrayerTimesCalendarByCoordinates({
+    required double latitude,
+    required double longitude,
+    required int month,
+    required int year,
+  });
+
   Future<PrayerTimesModel> getPrayerTimesByCity({
     required String city,
     required String country,
     required String date,
+  });
+
+  Future<PrayerTimesModel> getPrayerTimesCalendarByCity({
+    required String city,
+    required String country,
+    required int month,
+    required int year,
   });
 }
 
@@ -38,6 +52,23 @@ class PrayerTimesRemoteDataSourceImpl implements PrayerTimesRemoteDataSource {
   }
 
   @override
+  Future<PrayerTimesModel> getPrayerTimesCalendarByCoordinates({
+    required double latitude,
+    required double longitude,
+    required int month,
+    required int year,
+  }) async {
+    final url = PrayerTimesApiConstants.calendarByCoordinates(
+      latitude: latitude,
+      longitude: longitude,
+      month: month,
+      year: year,
+    );
+
+    return _getPrayerTimes(url);
+  }
+
+  @override
   Future<PrayerTimesModel> getPrayerTimesByCity({
     required String city,
     required String country,
@@ -47,6 +78,23 @@ class PrayerTimesRemoteDataSourceImpl implements PrayerTimesRemoteDataSource {
       city: city,
       country: country,
       date: date,
+    );
+
+    return _getPrayerTimes(url);
+  }
+
+  @override
+  Future<PrayerTimesModel> getPrayerTimesCalendarByCity({
+    required String city,
+    required String country,
+    required int month,
+    required int year,
+  }) async {
+    final url = PrayerTimesApiConstants.calendarByCity(
+      city: city,
+      country: country,
+      month: month,
+      year: year,
     );
 
     return _getPrayerTimes(url);

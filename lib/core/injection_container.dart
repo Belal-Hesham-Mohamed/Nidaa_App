@@ -4,6 +4,7 @@ import 'package:nidaa/location/data/datasource/location_local_data_source.dart';
 import 'package:nidaa/location/data/repositories/location_repository_impl.dart';
 import 'package:nidaa/location/domain/repositories/location_repo_domain.dart';
 import 'package:nidaa/location/domain/usecase/get_current_loc_usecase.dart';
+import 'package:nidaa/prayer_time/data/datasource/prayer_times_local_data_source.dart';
 import 'package:nidaa/prayer_time/data/datasource/prayer_times_remote_data_source.dart';
 import 'package:nidaa/prayer_time/data/repositories/prayer_times_repo.dart';
 import 'package:nidaa/prayer_time/domain/repositories/prayer_time_repo_domain.dart';
@@ -25,8 +26,14 @@ void initDependencies() {
   sl.registerLazySingleton<PrayerTimesRemoteDataSource>(
     () => PrayerTimesRemoteDataSourceImpl(dio: sl()),
   );
+  sl.registerLazySingleton<PrayerTimesLocalDataSource>(
+    () => PrayerTimesLocalDataSourceImpl(),
+  );
   sl.registerLazySingleton<PrayerTimesRepositoryDomain>(
-    () => PrayerTimesRepositoryImpl(remoteDataSource: sl()),
+    () => PrayerTimesRepositoryImpl(
+      remoteDataSource: sl(),
+      localDataSource: sl(),
+    ),
   );
   sl.registerLazySingleton<GetPrayerTimeCoordinates>(
     () => GetPrayerTimeCoordinates(sl()),
