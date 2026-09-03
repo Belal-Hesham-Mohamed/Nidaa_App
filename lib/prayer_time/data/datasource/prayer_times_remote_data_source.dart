@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'package:internet_connection_checker_plus/internet_connection_checker_plus.dart';
 import 'package:nidaa/core/constant/api_constant.dart';
 import 'package:nidaa/prayer_time/data/exception/prayer_times_exception.dart';
 import 'package:nidaa/prayer_time/data/model/prayer_times_model.dart';
@@ -41,12 +42,8 @@ class PrayerTimesRemoteDataSourceImpl implements PrayerTimesRemoteDataSource {
   @override
   Future<bool> checkInternetConnection() async {
     try {
-      await dio.get(
-        PrayerTimesApiConstants.baseUrl,
-        options: Options(validateStatus: (_) => true),
-      );
-      return true;
-    } on DioException {
+      return await InternetConnection().hasInternetAccess;
+    } catch (_) {
       return false;
     }
   }

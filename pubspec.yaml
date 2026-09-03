@@ -40,6 +40,7 @@ dependencies:
   get_it: ^8.0.3
   hive: ^2.2.3
   hive_flutter: ^1.1.0
+  internet_connection_checker_plus: ^3.1.1
   uni_country_city_picker: ^1.0.2
 
 dev_dependencies:
