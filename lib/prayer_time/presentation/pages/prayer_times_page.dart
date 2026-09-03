@@ -124,6 +124,9 @@ class _PrayerTimesViewState extends State<_PrayerTimesView> {
               final success = visibleState is PrayerTimeSuccess
                   ? visibleState
                   : null;
+              final isManualLocation =
+                  success?.location?.isManual ??
+                  (_selectedCity != null && _selectedCountry != null);
               if (success != null && !_initialPositionSet) {
                 WidgetsBinding.instance.addPostFrameCallback((_) {
                   final target = _nextPrayerKey.currentContext;
@@ -141,7 +144,7 @@ class _PrayerTimesViewState extends State<_PrayerTimesView> {
               return ListView(
                 padding: const EdgeInsets.fromLTRB(20, 8, 20, 18),
                 children: [
-                  _topBar(),
+                  _topBar(isManualLocation: isManualLocation),
                   const SizedBox(height: 12),
                   _locationCard(success),
                   const SizedBox(height: 24),
@@ -178,7 +181,7 @@ class _PrayerTimesViewState extends State<_PrayerTimesView> {
     );
   }
 
-  Widget _topBar() {
+  Widget _topBar({required bool isManualLocation}) {
     return Row(
       children: [
         Container(
@@ -215,15 +218,16 @@ class _PrayerTimesViewState extends State<_PrayerTimesView> {
             ],
           ),
         ),
-        IconButton(
-          onPressed: _loadCurrentLocation,
-          icon: const Icon(Icons.refresh_rounded),
-          color: _ink,
-          tooltip: 'Refresh location',
-          visualDensity: VisualDensity.compact,
-          padding: EdgeInsets.zero,
-          constraints: const BoxConstraints.tightFor(width: 32, height: 32),
-        ),
+        if (isManualLocation)
+          IconButton(
+            onPressed: _loadCurrentLocation,
+            icon: const Icon(Icons.refresh_rounded),
+            color: _ink,
+            tooltip: 'Refresh location',
+            visualDensity: VisualDensity.compact,
+            padding: EdgeInsets.zero,
+            constraints: const BoxConstraints.tightFor(width: 32, height: 32),
+          ),
       ],
     );
   }
@@ -273,26 +277,27 @@ class _PrayerTimesViewState extends State<_PrayerTimesView> {
             spacing: 6,
             runSpacing: 6,
             children: [
-              OutlinedButton.icon(
-                onPressed: () =>
-                    context.read<PrayerTimeCubit>().useCurrentLocation(),
-                icon: const Icon(Icons.my_location_rounded, size: 14),
-                label: const Text('Use Current Location'),
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: _ink,
-                  side: const BorderSide(color: Color(0xFFBBD0C4)),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(9),
+              if (isManual)
+                OutlinedButton.icon(
+                  onPressed: () =>
+                      context.read<PrayerTimeCubit>().useCurrentLocation(),
+                  icon: const Icon(Icons.my_location_rounded, size: 14),
+                  label: const Text('Use Current Location'),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: _ink,
+                    side: const BorderSide(color: Color(0xFFBBD0C4)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(9),
+                    ),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 7,
+                    ),
+                    minimumSize: Size.zero,
+                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                    visualDensity: VisualDensity.compact,
                   ),
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 10,
-                    vertical: 7,
-                  ),
-                  minimumSize: Size.zero,
-                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                  visualDensity: VisualDensity.compact,
                 ),
-              ),
               FilledButton.icon(
                 onPressed: _changeLocation,
                 icon: const Icon(Icons.edit_location_alt_outlined, size: 14),

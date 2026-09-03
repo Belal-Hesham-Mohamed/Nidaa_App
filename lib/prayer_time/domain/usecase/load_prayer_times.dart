@@ -28,15 +28,13 @@ class LoadPrayerTimes {
 
   Future<Either<Failure, PrayerTimesFlowResult>> call({
     bool forceCurrentLocation = false,
+    void Function()? onLoading,
   }) async {
     final today = _dateOnly(DateTime.now());
-    final hasInternet = await prayerTimesRepository.hasInternetConnection();
-    if (!hasInternet) {
-      return _fromCache(today, null, noInternet: true);
-    }
-
     Location? location = locationRepository.getSavedLocation();
-    if (forceCurrentLocation) {
+    var locationChanged = location == null;
+
+    if (forceCurrentLocation || location == null || !location.isManual) {
       final gpsResult = await _getCurrentGpsLocation();
       final failure = gpsResult.fold<Failure?>((value) => value, (_) => null);
       if (failure != null) return Left(failure);
@@ -44,47 +42,34 @@ class LoadPrayerTimes {
         (_) => null,
         (value) => value,
       )!;
-      final shouldRefresh =
+      locationChanged =
           location == null ||
           location.isManual ||
           location.city != gpsLocation.city ||
           location.country != gpsLocation.country;
       location = gpsLocation;
-      await locationRepository.saveLocation(location);
-      if (shouldRefresh) {
-        await prayerTimesRepository.clearCachedPrayerTimes();
-      }
-    } else if (location == null) {
-      final gpsResult = await _getCurrentGpsLocation();
-      final failure = gpsResult.fold<Failure?>((value) => value, (_) => null);
-      if (failure != null) return Left(failure);
-      location = gpsResult.fold<Location?>((_) => null, (value) => value)!;
-      await locationRepository.saveLocation(location);
-    } else if (!location.isManual) {
-      final current = await locationRepository.getCurrentLocation();
-      final failure = current.fold<Failure?>((value) => value, (_) => null);
-      if (failure != null) return Left(failure);
-      final currentLocation = current.fold<Location?>(
-        (_) => null,
-        (value) => value,
-      )!;
-      if (currentLocation.city != location.city ||
-          currentLocation.country != location.country) {
-        location = Location(
-          latitude: currentLocation.latitude,
-          longitude: currentLocation.longitude,
-          country: currentLocation.country,
-          city: currentLocation.city,
-          isManual: false,
-        );
-        await locationRepository.saveLocation(location);
-        await prayerTimesRepository.clearCachedPrayerTimes();
-      }
     }
 
     try {
       var cached = prayerTimesRepository.getCachedPrayerTimes();
-      if (!_hasRequiredRange(cached, today)) {
+      final cacheIsValid = _hasRequiredRange(cached, today);
+      if (!locationChanged && cacheIsValid) {
+        return _fromCache(today, location, cached: cached);
+      }
+
+      final hasInternet = await prayerTimesRepository.hasInternetConnection();
+      if (!hasInternet) {
+        return _fromCache(today, location, cached: cached, noInternet: true);
+      }
+
+      onLoading?.call();
+
+      if (locationChanged) {
+        await prayerTimesRepository.clearCachedPrayerTimes();
+        cached = const [];
+      }
+
+      if (!cacheIsValid || locationChanged) {
         final months = _requiredMonths(today);
         for (final month in months) {
           final result = location.isManual
@@ -103,6 +88,7 @@ class LoadPrayerTimes {
           final failure = result.fold<Failure?>((value) => value, (_) => null);
           if (failure != null) return Left(failure);
         }
+        if (locationChanged) await locationRepository.saveLocation(location);
         cached = prayerTimesRepository.getCachedPrayerTimes();
         await prayerTimesRepository.removeCachedPrayerTimesBefore(
           today.subtract(const Duration(days: 7)),

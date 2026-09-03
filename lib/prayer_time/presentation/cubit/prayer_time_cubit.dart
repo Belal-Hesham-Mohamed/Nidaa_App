@@ -26,11 +26,9 @@ class PrayerTimeCubit extends Cubit<PrayerTimeState> {
   }) : super(PrayerTimeInitial());
 
   Future<void> start({bool forceCurrentLocation = false}) async {
-    if (forceCurrentLocation && !await ensureInternetAvailable()) return;
-
-    emit(PrayerTimeLoading());
     final result = await loadPrayerTimes(
       forceCurrentLocation: forceCurrentLocation,
+      onLoading: () => emit(PrayerTimeLoading()),
     );
     result.fold(
       (failure) => emit(PrayerTimeError(failure.massage)),
